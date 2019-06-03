@@ -115,7 +115,7 @@ make_iovec_for_ufs(struct iovec **iov, size_t *iov_size, void *data)
 	if (data != NULL) {
 		args = data;
 
-		conv_oexport_to_export(&args->export, &exp);
+		conv_oexport_to_export(&(args->export), &exp);
 
 		add_to_iovec(iov, iov_size, "from",   args->fspec, 0);
 		add_to_iovec(iov, iov_size, "export", &exp,        sizeof(exp));
@@ -134,7 +134,7 @@ make_iovec_for_cd9660(struct iovec **iov, size_t *iov_size, void *data)
 
 		snprintf(ssector_str, sizeof(ssector_str), "%d", args->ssector);
 
-		conv_oexport_to_export(&args->export, &exp);
+		conv_oexport_to_export(&(args->export), &exp);
 
 		add_to_iovec(iov, iov_size, "from",     args->fspec,    0);
 		add_to_iovec(iov, iov_size, "export",   &exp,           sizeof(exp));
