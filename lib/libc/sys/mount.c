@@ -63,9 +63,8 @@ conv_oexport_to_export(struct oexport_args *oexp, struct export_args *exp)
 static void
 add_to_nmount_args(struct nmount_args *nm_args, const char *name, void *value, size_t value_size)
 {
-	size_t        size;
-	void         *tmp_base;
-	struct iovec *tmp_iov;
+	size_t size;
+	void  *tmp_ptr;
 
 	if (nm_args->error) {
 		return;
@@ -78,60 +77,60 @@ add_to_nmount_args(struct nmount_args *nm_args, const char *name, void *value, s
 			size = nm_args->iov_size * 2;
 		}
 
-		tmp_iov = realloc(nm_args->iov, size);
+		tmp_ptr = realloc(nm_args->iov, size);
 
-		if (tmp_iov != NULL) {
-			nm_args->iov      = tmp_iov;
-			nm_args->iov_size = size;
-		} else {
+		if (tmp_ptr == NULL) {
 			nm_args->error = true;
 
 			return;
 		}
+
+		nm_args->iov      = tmp_ptr;
+		nm_args->iov_size = size;
 	}
 
-	tmp_base = strdup(name);
+	tmp_ptr = strdup(name);
 
-	if (tmp_base != NULL) {
-		nm_args->iov[nm_args->iov_count].iov_base = tmp_base;
-		nm_args->iov[nm_args->iov_count].iov_len  = strlen(tmp_base) + 1;
-
-		nm_args->iov_count++;
-	} else {
+	if (tmp_ptr == NULL) {
 		nm_args->error = true;
 
 		return;
 	}
 
+	nm_args->iov[nm_args->iov_count].iov_base = tmp_ptr;
+	nm_args->iov[nm_args->iov_count].iov_len  = strlen(tmp_ptr) + 1;
+
+	nm_args->iov_count++;
+
 	if (value != NULL) {
 		if (value_size > 0) {
-			tmp_base = malloc(value_size);
+			tmp_ptr = malloc(value_size);
 
-			if (tmp_base != NULL) {
-				memcpy(tmp_base, value, value_size);
-
-				nm_args->iov[nm_args->iov_count].iov_base = tmp_base;
-				nm_args->iov[nm_args->iov_count].iov_len  = value_size;
-
-				nm_args->iov_count++;
-			} else {
+			if (tmp_ptr == NULL) {
 				nm_args->error = true;
 
 				return;
 			}
+
+			memcpy(tmp_ptr, value, value_size);
+
+			nm_args->iov[nm_args->iov_count].iov_base = tmp_ptr;
+			nm_args->iov[nm_args->iov_count].iov_len  = value_size;
+
+			nm_args->iov_count++;
 		} else {
-			tmp_base = strdup(value);
+			tmp_ptr = strdup(value);
 
-			if (tmp_base != NULL) {
-				nm_args->iov[nm_args->iov_count].iov_base = tmp_base;
-				nm_args->iov[nm_args->iov_count].iov_len  = strlen(tmp_base) + 1;
-
-				nm_args->iov_count++;
-			} else {
+			if (tmp_ptr == NULL) {
 				nm_args->error = true;
 
 				return;
 			}
+
+			nm_args->iov[nm_args->iov_count].iov_base = tmp_ptr;
+			nm_args->iov[nm_args->iov_count].iov_len  = strlen(tmp_ptr) + 1;
+
+			nm_args->iov_count++;
 		}
 	} else {
 		nm_args->iov[nm_args->iov_count].iov_base = NULL;
