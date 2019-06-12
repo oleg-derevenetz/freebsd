@@ -63,27 +63,26 @@ conv_oexport_to_export(struct oexport_args *oexp, struct export_args *exp)
 static void
 add_to_nmount_args(struct nmount_args *nm_args, const char *name, void *value, size_t value_size)
 {
-	u_int         new_count;
-	size_t        new_size;
+	size_t        size;
 	void         *tmp_base;
 	struct iovec *tmp_iov;
 
-	new_count = nm_args->iov_count + 2;
+	if (!(nm_args->error)) {
+		size = sizeof(*(nm_args->iov)) * (nm_args->iov_count + 2);
 
-	if (!(nm_args->error) && nm_args->iov_size < sizeof(*(nm_args->iov)) * new_count) {
-		if (nm_args->iov_size * 2 < sizeof(*(nm_args->iov)) * new_count) {
-			new_size = sizeof(*(nm_args->iov)) * new_count;
-		} else {
-			new_size = nm_args->iov_size * 2;
-		}
+		if (nm_args->iov_size < size) {
+			if (size < nm_args->iov_size * 2) {
+				size = nm_args->iov_size * 2;
+			}
 
-		tmp_iov = realloc(nm_args->iov, new_size);
+			tmp_iov = realloc(nm_args->iov, size);
 
-		if (tmp_iov != NULL) {
-			nm_args->iov      = tmp_iov;
-			nm_args->iov_size = new_size;
-		} else {
-			nm_args->error = true;
+			if (tmp_iov != NULL) {
+				nm_args->iov      = tmp_iov;
+				nm_args->iov_size = size;
+			} else {
+				nm_args->error = true;
+			}
 		}
 	}
 
@@ -218,7 +217,7 @@ mount(const char *type, const char *dir, int flags, void *data)
 	int                result;
 	struct nmount_args nm_args;
 
-	fprintf(stderr, "WRAPPER CALLED\n");
+	fprintf(stderr, "DEBUG: WRAPPER CALLED\n");
 
 	nm_args.error     = false;
 	nm_args.iov_count = 0;
