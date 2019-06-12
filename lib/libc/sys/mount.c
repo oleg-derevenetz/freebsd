@@ -177,9 +177,11 @@ make_nmount_args_for_cd9660(struct nmount_args *nm_args, void *data)
 	if (data != NULL) {
 		args = data;
 
-		snprintf(ssector_str, sizeof(ssector_str), "%d", args->ssector);
-
 		conv_oexport_to_export(&(args->export), &exp);
+
+		if (snprintf(ssector_str, sizeof(ssector_str), "%d", args->ssector) < 0) {
+			nm_args->error = true;
+		}
 
 		add_to_nmount_args(nm_args, "from",     args->fspec,    0);
 		add_to_nmount_args(nm_args, "export",   &exp,           sizeof(exp));
