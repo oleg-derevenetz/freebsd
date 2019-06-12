@@ -116,8 +116,6 @@ add_to_nmount_args(struct nmount_args *nm_args, const char *name, void *value, s
 
 			nm_args->iov[nm_args->iov_count].iov_base = tmp_ptr;
 			nm_args->iov[nm_args->iov_count].iov_len  = value_size;
-
-			nm_args->iov_count++;
 		} else {
 			tmp_ptr = strdup(value);
 
@@ -129,15 +127,13 @@ add_to_nmount_args(struct nmount_args *nm_args, const char *name, void *value, s
 
 			nm_args->iov[nm_args->iov_count].iov_base = tmp_ptr;
 			nm_args->iov[nm_args->iov_count].iov_len  = strlen(tmp_ptr) + 1;
-
-			nm_args->iov_count++;
 		}
 	} else {
 		nm_args->iov[nm_args->iov_count].iov_base = NULL;
 		nm_args->iov[nm_args->iov_count].iov_len  = 0;
-
-		nm_args->iov_count++;
 	}
+
+	nm_args->iov_count++;
 }
 
 static void
