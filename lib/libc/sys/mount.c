@@ -221,8 +221,6 @@ make_nmount_args_for_cd9660(struct nmount_args *nm_args, void *data)
 	}
 }
 
-__weak_reference(__sys_mount, __mount);
-
 #pragma weak mount
 int
 mount(const char *type, const char *dir, int flags, void *data)
