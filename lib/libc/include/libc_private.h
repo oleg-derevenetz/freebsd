@@ -201,7 +201,6 @@ enum {
 	INTERPOS_fcntl,
 	INTERPOS_fsync,
 	INTERPOS_fork,
-	INTERPOS_mount,
 	INTERPOS_msync,
 	INTERPOS_nanosleep,
 	INTERPOS_openat,
