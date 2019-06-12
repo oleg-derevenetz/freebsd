@@ -38,76 +38,122 @@ __FBSDID("$FreeBSD$");
 #include <isofs/cd9660/cd9660_mount.h>
 #include <ufs/ufs/ufsmount.h>
 
+#include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 
 #include "libc_private.h"
 
+struct nmount_args
+{
+	bool          error;
+	u_int         iov_count; /* number of elements in iov */
+	size_t        iov_size;  /* real size of iov in bytes */
+	struct iovec *iov;
+};
+
 static void
 conv_oexport_to_export(struct oexport_args *oexp, struct export_args *exp)
 {
+	memset(exp, 0,    sizeof(*exp));
 	memcpy(exp, oexp, sizeof(*oexp));
-
-	exp->ex_numsecflavors = 0;
 }
 
 static void
-add_to_iovec(struct iovec **iov, size_t *iov_size, const char *name, void *value, size_t value_size)
+add_to_nmount_args(struct nmount_args *nm_args, const char *name, void *value, size_t value_size)
 {
-	void         *tmp_str;
+	u_int         new_count;
+	size_t        new_size;
+	void         *tmp_base;
 	struct iovec *tmp_iov;
 
-	tmp_iov = realloc(*iov, sizeof(**iov) * (*iov_size + 2));
+	new_count = nm_args->iov_count + 2;
 
-	if (tmp_iov != NULL) {
-		*iov = tmp_iov;
-
-		tmp_str = strdup(name);
-
-		(*iov)[*iov_size].iov_base = tmp_str;
-
-		if (tmp_str != NULL) {
-			(*iov)[*iov_size].iov_len = strlen(tmp_str) + 1;
+	if (!(nm_args->error) && nm_args->iov_size < sizeof(*(nm_args->iov)) * new_count) {
+		if (nm_args->iov_size * 2 < sizeof(*(nm_args->iov)) * new_count) {
+			new_size = sizeof(*(nm_args->iov)) * new_count;
 		} else {
-			(*iov)[*iov_size].iov_len = 0;
+			new_size = nm_args->iov_size * 2;
 		}
 
-		(*iov_size)++;
+		tmp_iov = realloc(nm_args->iov, new_size);
 
-		(*iov)[*iov_size].iov_base = value;
+		if (tmp_iov != NULL) {
+			nm_args->iov      = tmp_iov;
+			nm_args->iov_size = new_size;
+		} else {
+			nm_args->error = true;
+		}
+	}
 
+	if (!(nm_args->error)) {
+		tmp_base = strdup(name);
+
+		if (tmp_base != NULL) {
+			nm_args->iov[nm_args->iov_count].iov_base = tmp_base;
+			nm_args->iov[nm_args->iov_count].iov_len  = strlen(tmp_base) + 1;
+
+			nm_args->iov_count++;
+		} else {
+			nm_args->error = true;
+		}
+	}
+
+	if (!(nm_args->error)) {
 		if (value != NULL) {
 			if (value_size > 0) {
-				(*iov)[*iov_size].iov_len = value_size;
+				tmp_base = malloc(value_size);
+
+				if (tmp_base != NULL) {
+					memcpy(tmp_base, value, value_size);
+
+					nm_args->iov[nm_args->iov_count].iov_base = tmp_base;
+					nm_args->iov[nm_args->iov_count].iov_len  = value_size;
+
+					nm_args->iov_count++;
+				} else {
+					nm_args->error = true;
+				}
 			} else {
-				(*iov)[*iov_size].iov_len = strlen(value) + 1;
+				tmp_base = strdup(value);
+
+				if (tmp_base != NULL) {
+					nm_args->iov[nm_args->iov_count].iov_base = tmp_base;
+					nm_args->iov[nm_args->iov_count].iov_len  = strlen(tmp_base) + 1;
+
+					nm_args->iov_count++;
+				} else {
+					nm_args->error = true;
+				}
 			}
 		} else {
-			(*iov)[*iov_size].iov_len = 0;
+			nm_args->iov[nm_args->iov_count].iov_base = NULL;
+			nm_args->iov[nm_args->iov_count].iov_len  = 0;
+
+			nm_args->iov_count++;
 		}
-
-		(*iov_size)++;
 	}
 }
 
 static void
-free_iovec(struct iovec **iov, size_t *iov_size)
+free_nmount_args(struct nmount_args *nm_args)
 {
-	size_t i;
+	u_int i;
 
-	for (i = 0; i < *iov_size; i += 2) {
-		free((*iov)[i].iov_base);
+	for (i = 0; i < nm_args->iov_count; i++) {
+		free(nm_args->iov[i].iov_base);
 	}
 
-	free(*iov);
+	free(nm_args->iov);
 
-	*iov      = NULL;
-	*iov_size = 0;
+	nm_args->iov_count = 0;
+	nm_args->iov_size  = 0;
+	nm_args->iov       = NULL;
 }
 
 static void
-make_iovec_for_ufs(struct iovec **iov, size_t *iov_size, void *data)
+make_nmount_args_for_ufs(struct nmount_args *nm_args, void *data)
 {
 	struct ufs_args   *args;
 	struct export_args exp;
@@ -117,13 +163,13 @@ make_iovec_for_ufs(struct iovec **iov, size_t *iov_size, void *data)
 
 		conv_oexport_to_export(&(args->export), &exp);
 
-		add_to_iovec(iov, iov_size, "from",   args->fspec, 0);
-		add_to_iovec(iov, iov_size, "export", &exp,        sizeof(exp));
+		add_to_nmount_args(nm_args, "from",   args->fspec, 0);
+		add_to_nmount_args(nm_args, "export", &exp,        sizeof(exp));
 	}
 }
 
 static void
-make_iovec_for_cd9660(struct iovec **iov, size_t *iov_size, void *data)
+make_nmount_args_for_cd9660(struct nmount_args *nm_args, void *data)
 {
 	char               ssector_str[64];
 	struct iso_args   *args;
@@ -136,29 +182,29 @@ make_iovec_for_cd9660(struct iovec **iov, size_t *iov_size, void *data)
 
 		conv_oexport_to_export(&(args->export), &exp);
 
-		add_to_iovec(iov, iov_size, "from",     args->fspec,    0);
-		add_to_iovec(iov, iov_size, "export",   &exp,           sizeof(exp));
-		add_to_iovec(iov, iov_size, "ssector",  ssector_str,    0);
-		add_to_iovec(iov, iov_size, "cs_disk",  args->cs_disk,  0);
-		add_to_iovec(iov, iov_size, "cs_local", args->cs_local, 0);
+		add_to_nmount_args(nm_args, "from",     args->fspec,    0);
+		add_to_nmount_args(nm_args, "export",   &exp,           sizeof(exp));
+		add_to_nmount_args(nm_args, "ssector",  ssector_str,    0);
+		add_to_nmount_args(nm_args, "cs_disk",  args->cs_disk,  0);
+		add_to_nmount_args(nm_args, "cs_local", args->cs_local, 0);
 
 		if (args->flags & ISOFSMNT_NORRIP) {
-			add_to_iovec(iov, iov_size, "norrip", NULL, 0);
+			add_to_nmount_args(nm_args, "norrip", NULL, 0);
 		}
 		if (!(args->flags & ISOFSMNT_GENS)) {
-			add_to_iovec(iov, iov_size, "nogens", NULL, 0);
+			add_to_nmount_args(nm_args, "nogens", NULL, 0);
 		}
 		if (!(args->flags & ISOFSMNT_EXTATT)) {
-			add_to_iovec(iov, iov_size, "noextatt", NULL, 0);
+			add_to_nmount_args(nm_args, "noextatt", NULL, 0);
 		}
 		if (args->flags & ISOFSMNT_NOJOLIET) {
-			add_to_iovec(iov, iov_size, "nojoliet", NULL, 0);
+			add_to_nmount_args(nm_args, "nojoliet", NULL, 0);
 		}
 		if (!(args->flags & ISOFSMNT_BROKENJOLIET)) {
-			add_to_iovec(iov, iov_size, "nobrokenjoliet", NULL, 0);
+			add_to_nmount_args(nm_args, "nobrokenjoliet", NULL, 0);
 		}
 		if (!(args->flags & ISOFSMNT_KICONV)) {
-			add_to_iovec(iov, iov_size, "nokiconv", NULL, 0);
+			add_to_nmount_args(nm_args, "nokiconv", NULL, 0);
 		}
 	}
 }
@@ -169,27 +215,32 @@ __weak_reference(__sys_mount, __mount);
 int
 mount(const char *type, const char *dir, int flags, void *data)
 {
-	int           result;
-	size_t        iov_size;
-	struct iovec *iov;
+	int                result;
+	struct nmount_args nm_args;
 
 	fprintf(stderr, "WRAPPER CALLED\n");
 
-	iov      = NULL;
-	iov_size = 0;
+	nm_args.error     = false;
+	nm_args.iov_count = 0;
+	nm_args.iov_size  = 0;
+	nm_args.iov       = NULL;
 
-	add_to_iovec(&iov, &iov_size, "fstype", (void*)type, 0);
-	add_to_iovec(&iov, &iov_size, "fspath", (void*)dir,  0);
+	add_to_nmount_args(&nm_args, "fstype", (void*)type, 0);
+	add_to_nmount_args(&nm_args, "fspath", (void*)dir,  0);
 
 	if (strcmp(type, "ufs") == 0) {
-		make_iovec_for_ufs(&iov, &iov_size, data);
+		make_nmount_args_for_ufs(&nm_args, data);
 	} else if (strcmp(type, "cd9660") == 0) {
-		make_iovec_for_cd9660(&iov, &iov_size, data);
+		make_nmount_args_for_cd9660(&nm_args, data);
 	}
 
-	result = nmount(iov, iov_size, flags);
+	if (!(nm_args.error)) {
+		result = nmount(nm_args.iov, nm_args.iov_count, flags);
+	} else {
+		result = -1;
+	}
 
-	free_iovec(&iov, &iov_size);
+	free_nmount_args(&nm_args);
 
 	return result;
 }
