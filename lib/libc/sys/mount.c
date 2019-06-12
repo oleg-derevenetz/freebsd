@@ -31,7 +31,6 @@
 __FBSDID("$FreeBSD$");
 
 #include <sys/types.h>
-#include <sys/syscall.h>
 #include <sys/uio.h>
 #include <sys/mount.h>
 
@@ -44,6 +43,8 @@ __FBSDID("$FreeBSD$");
 #include <stdio.h>
 
 #include "libc_private.h"
+
+int _nmount(struct iovec *, unsigned int, int);
 
 struct nmount_args
 {
@@ -248,7 +249,7 @@ mount(const char *type, const char *dir, int flags, void *data)
 	if (nm_args.error) {
 		result = -1;
 	} else if (known_fs) {
-		result = nmount(nm_args.iov, nm_args.iov_count, flags);
+		result = _nmount(nm_args.iov, nm_args.iov_count, flags);
 	} else {
 		fprintf(stderr, "DEBUG: UNKNOWN FS, CALLING __sys_mount()\n");
 
