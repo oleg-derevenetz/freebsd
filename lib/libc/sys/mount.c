@@ -153,24 +153,6 @@ free_nmount_args(struct nmount_args *nm_args)
 }
 
 static void
-make_nmount_args_for_ufs(struct nmount_args *nm_args, void *data)
-{
-	struct ufs_args   *args;
-	struct export_args exp;
-
-	if (data == NULL) {
-		return;
-	}
-
-	args = data;
-
-	conv_oexport_to_export(&(args->export), &exp);
-
-	add_to_nmount_args(nm_args, "from",   args->fspec, 0);
-	add_to_nmount_args(nm_args, "export", &exp,        sizeof(exp));
-}
-
-static void
 make_nmount_args_for_cd9660(struct nmount_args *nm_args, void *data)
 {
 	char               ssector_str[64];
@@ -217,33 +199,71 @@ make_nmount_args_for_cd9660(struct nmount_args *nm_args, void *data)
 	}
 }
 
+static void
+make_nmount_args_for_ufs(struct nmount_args *nm_args, void *data)
+{
+	struct ufs_args   *args;
+	struct export_args exp;
+
+	if (data == NULL) {
+		return;
+	}
+
+	args = data;
+
+	conv_oexport_to_export(&(args->export), &exp);
+
+	add_to_nmount_args(nm_args, "from",   args->fspec, 0);
+	add_to_nmount_args(nm_args, "export", &exp,        sizeof(exp));
+}
+
+struct fs_entry
+{
+	char  *type;
+	void (*make_nmount_args_for_type)(struct nmount_args *, void *);
+};
+
+struct fs_entry supported_fs[] = {
+	{"cd9660", make_nmount_args_for_cd9660},
+	{"ufs",    make_nmount_args_for_ufs},
+	{NULL,     NULL}
+};
+
 #pragma weak mount
 int
 mount(const char *type, const char *dir, int flags, void *data)
 {
-	bool               known_fs = true;
-	int                result;
-	struct nmount_args nm_args  = {};
+	bool               supported = false;
+	int                i, result;
+	struct nmount_args nm_args = {};
 
 	fprintf(stderr, "DEBUG: WRAPPER CALLED\n");
 
-	add_to_nmount_args(&nm_args, "fstype", (void*)type, 0);
-	add_to_nmount_args(&nm_args, "fspath", (void*)dir,  0);
+	for (i = 0;; i++) {
+		if (supported_fs[i].type == NULL) {
+			break;
+		}
 
-	if (strcmp(type, "ufs") == 0) {
-		make_nmount_args_for_ufs(&nm_args, data);
-	} else if (strcmp(type, "cd9660") == 0) {
-		make_nmount_args_for_cd9660(&nm_args, data);
-	} else {
-		known_fs = false;
+		if (strcmp(type, supported_fs[i].type) == 0) {
+			supported = true;
+
+			add_to_nmount_args(&nm_args, "fstype", (void*)type, 0);
+			add_to_nmount_args(&nm_args, "fspath", (void*)dir,  0);
+
+			if (supported_fs[i].make_nmount_args_for_type != NULL) {
+				supported_fs[i].make_nmount_args_for_type(&nm_args, data);
+			}
+
+			break;
+		}
 	}
 
 	if (nm_args.error) {
 		result = -1;
-	} else if (known_fs) {
+	} else if (supported) {
 		result = _nmount(nm_args.iov, nm_args.iov_count, flags);
 	} else {
-		fprintf(stderr, "DEBUG: UNKNOWN FS, CALLING __sys_mount()\n");
+		fprintf(stderr, "DEBUG: UNSUPPORTED FS, CALLING __sys_mount()\n");
 
 		result = __sys_mount(type, dir, flags, data);
 	}
