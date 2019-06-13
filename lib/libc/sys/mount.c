@@ -259,7 +259,7 @@ make_nmount_args_for_nandfs(struct nmount_args *nm_args, void *data)
 
 	add_to_nmount_args(nm_args, "from", args->fspec, 0);
 
-	add_fmt_to_nmount_args(nm_args, "snap", "%"PRIi64, args->cpno);
+	add_fmt_to_nmount_args(nm_args, "snap", "%"PRId64, args->cpno);
 }
 
 static void
