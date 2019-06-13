@@ -219,11 +219,11 @@ make_nmount_args_for_ufs(struct nmount_args *nm_args, void *data)
 
 struct fs_entry
 {
-	char  *type;
-	void (*make_nmount_args_for_type)(struct nmount_args *, void *);
+	const char * const type;
+	void      (* const make_nmount_args_for_type)(struct nmount_args *, void *);
 };
 
-struct fs_entry supported_fs[] = {
+const struct fs_entry supported_fs[] = {
 	{"cd9660", make_nmount_args_for_cd9660},
 	{"ufs",    make_nmount_args_for_ufs},
 	{NULL,     NULL}
