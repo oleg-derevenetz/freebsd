@@ -291,6 +291,7 @@ const struct fs_entry supported_fs[] = {
 	{"fdescfs", NULL},
 	{"msdosfs", make_nmount_args_for_msdosfs},
 	{"nandfs",  make_nmount_args_for_nandfs},
+	{"procfs",  NULL},
 	{"ufs",     make_nmount_args_for_ufs},
 	{NULL,      NULL}
 };
