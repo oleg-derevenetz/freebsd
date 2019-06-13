@@ -288,6 +288,7 @@ struct fs_entry
 
 const struct fs_entry supported_fs[] = {
 	{"cd9660",  make_nmount_args_for_cd9660},
+	{"fdescfs", NULL},
 	{"msdosfs", make_nmount_args_for_msdosfs},
 	{"nandfs",  make_nmount_args_for_nandfs},
 	{"ufs",     make_nmount_args_for_ufs},
