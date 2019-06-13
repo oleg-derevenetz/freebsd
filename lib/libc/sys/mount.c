@@ -138,6 +138,18 @@ add_to_nmount_args(struct nmount_args *nm_args, const char *name, void *value, s
 }
 
 static void
+add_flag_to_nmount_args(struct nmount_args *nm_args, const char *name, int flag)
+{
+	if (strlen(name) > 2 && name[0] == 'n' && name[1] == 'o') {
+		if (flag) {
+			add_to_nmount_args(nm_args, name,     NULL, 0);
+		} else {
+			add_to_nmount_args(nm_args, &name[2], NULL, 0);
+		}
+	}
+}
+
+static void
 free_nmount_args(struct nmount_args *nm_args)
 {
 	u_int i;
@@ -182,36 +194,12 @@ make_nmount_args_for_cd9660(struct nmount_args *nm_args, void *data)
 	add_to_nmount_args(nm_args, "cs_disk",  args->cs_disk,  0);
 	add_to_nmount_args(nm_args, "cs_local", args->cs_local, 0);
 
-	if (args->flags & ISOFSMNT_NORRIP) {
-		add_to_nmount_args(nm_args, "norrip",         NULL, 0);
-	} else {
-		add_to_nmount_args(nm_args, "rrip",           NULL, 0);
-	}
-	if (args->flags & ISOFSMNT_GENS) {
-		add_to_nmount_args(nm_args, "gens",           NULL, 0);
-	} else {
-		add_to_nmount_args(nm_args, "nogens",         NULL, 0);
-	}
-	if (args->flags & ISOFSMNT_EXTATT) {
-		add_to_nmount_args(nm_args, "extatt",         NULL, 0);
-	} else {
-		add_to_nmount_args(nm_args, "noextatt",       NULL, 0);
-	}
-	if (args->flags & ISOFSMNT_NOJOLIET) {
-		add_to_nmount_args(nm_args, "nojoliet",       NULL, 0);
-	} else {
-		add_to_nmount_args(nm_args, "joliet",         NULL, 0);
-	}
-	if (args->flags & ISOFSMNT_BROKENJOLIET) {
-		add_to_nmount_args(nm_args, "brokenjoliet",   NULL, 0);
-	} else {
-		add_to_nmount_args(nm_args, "nobrokenjoliet", NULL, 0);
-	}
-	if (args->flags & ISOFSMNT_KICONV) {
-		add_to_nmount_args(nm_args, "kiconv",         NULL, 0);
-	} else {
-		add_to_nmount_args(nm_args, "nokiconv",       NULL, 0);
-	}
+	add_flag_to_nmount_args(nm_args, "norrip",           args->flags & ISOFSMNT_NORRIP);
+	add_flag_to_nmount_args(nm_args, "nogens",         !(args->flags & ISOFSMNT_GENS));
+	add_flag_to_nmount_args(nm_args, "noextatt",       !(args->flags & ISOFSMNT_EXTATT));
+	add_flag_to_nmount_args(nm_args, "nojoliet",         args->flags & ISOFSMNT_NOJOLIET);
+	add_flag_to_nmount_args(nm_args, "nobrokenjoliet", !(args->flags & ISOFSMNT_BROKENJOLIET));
+	add_flag_to_nmount_args(nm_args, "nokiconv",       !(args->flags & ISOFSMNT_KICONV));
 }
 
 static void
@@ -268,26 +256,10 @@ make_nmount_args_for_msdosfs(struct nmount_args *nm_args, void *data)
 	add_to_nmount_args(nm_args, "cs_dos",   args->cs_dos,   0);
 	add_to_nmount_args(nm_args, "cs_local", args->cs_local, 0);
 
-	if (args->flags & MSDOSFSMNT_SHORTNAME) {
-		add_to_nmount_args(nm_args, "shortname",   NULL, 0);
-	} else {
-		add_to_nmount_args(nm_args, "noshortname", NULL, 0);
-	}
-	if (args->flags & MSDOSFSMNT_LONGNAME) {
-		add_to_nmount_args(nm_args, "longname",    NULL, 0);
-	} else {
-		add_to_nmount_args(nm_args, "nolongname",  NULL, 0);
-	}
-	if (args->flags & MSDOSFSMNT_NOWIN95) {
-		add_to_nmount_args(nm_args, "nowin95",     NULL, 0);
-	} else {
-		add_to_nmount_args(nm_args, "win95",       NULL, 0);
-	}
-	if (args->flags & MSDOSFSMNT_KICONV) {
-		add_to_nmount_args(nm_args, "kiconv",      NULL, 0);
-	} else {
-		add_to_nmount_args(nm_args, "nokiconv",    NULL, 0);
-	}
+	add_flag_to_nmount_args(nm_args, "noshortname", !(args->flags & MSDOSFSMNT_SHORTNAME));
+	add_flag_to_nmount_args(nm_args, "nolongname",  !(args->flags & MSDOSFSMNT_LONGNAME));
+	add_flag_to_nmount_args(nm_args, "nowin95",       args->flags & MSDOSFSMNT_NOWIN95);
+	add_flag_to_nmount_args(nm_args, "nokiconv",    !(args->flags & MSDOSFSMNT_KICONV));
 }
 
 static void
