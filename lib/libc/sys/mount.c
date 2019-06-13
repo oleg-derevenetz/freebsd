@@ -38,9 +38,10 @@ __FBSDID("$FreeBSD$");
 #include <ufs/ufs/ufsmount.h>
 
 #include <stdbool.h>
-#include <string.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "libc_private.h"
 
@@ -138,7 +139,24 @@ add_to_nmount_args(struct nmount_args *nm_args, const char *name, void *value, s
 }
 
 static void
-add_flag_to_nmount_args(struct nmount_args *nm_args, const char *name, int flag)
+add_fmt_to_nmount_args(struct nmount_args *nm_args, const char *name, const char *format, ...)
+{
+	char    tmp_str[64];
+	va_list ap;
+
+	va_start(ap, format);
+
+	if (vsnprintf(tmp_str, sizeof(tmp_str), format, ap) < 0) {
+		nm_args->error = true;
+	} else {
+		add_to_nmount_args(nm_args, name, tmp_str, 0);
+	}
+
+	va_end(ap);
+}
+
+static void
+add_flag_to_nmount_args(struct nmount_args *nm_args, const char *name, bool flag)
 {
 	if (strlen(name) > 2 && name[0] == 'n' && name[1] == 'o') {
 		if (flag) {
@@ -168,7 +186,6 @@ free_nmount_args(struct nmount_args *nm_args)
 static void
 make_nmount_args_for_cd9660(struct nmount_args *nm_args, void *data)
 {
-	char               tmp_str[64];
 	struct iso_args   *args;
 	struct export_args exp;
 
@@ -180,19 +197,12 @@ make_nmount_args_for_cd9660(struct nmount_args *nm_args, void *data)
 
 	conv_oexport_to_export(&(args->export), &exp);
 
-	add_to_nmount_args(nm_args, "from",   args->fspec, 0);
-	add_to_nmount_args(nm_args, "export", &exp,        sizeof(exp));
-
-	if (snprintf(tmp_str, sizeof(tmp_str), "%d", args->ssector) < 0) {
-		nm_args->error = true;
-
-		return;
-	}
-
-	add_to_nmount_args(nm_args, "ssector", tmp_str, 0);
-
+	add_to_nmount_args(nm_args, "from",     args->fspec,    0);
+	add_to_nmount_args(nm_args, "export",  &exp,            sizeof(exp));
 	add_to_nmount_args(nm_args, "cs_disk",  args->cs_disk,  0);
 	add_to_nmount_args(nm_args, "cs_local", args->cs_local, 0);
+
+	add_fmt_to_nmount_args(nm_args, "ssector", "%d", args->ssector);
 
 	add_flag_to_nmount_args(nm_args, "norrip",           args->flags & ISOFSMNT_NORRIP);
 	add_flag_to_nmount_args(nm_args, "nogens",         !(args->flags & ISOFSMNT_GENS));
@@ -205,7 +215,6 @@ make_nmount_args_for_cd9660(struct nmount_args *nm_args, void *data)
 static void
 make_nmount_args_for_msdosfs(struct nmount_args *nm_args, void *data)
 {
-	char                 tmp_str[64];
 	struct msdosfs_args *args;
 	struct export_args   exp;
 
@@ -217,44 +226,16 @@ make_nmount_args_for_msdosfs(struct nmount_args *nm_args, void *data)
 
 	conv_oexport_to_export(&(args->export), &exp);
 
-	add_to_nmount_args(nm_args, "from",   args->fspec, 0);
-	add_to_nmount_args(nm_args, "export", &exp,        sizeof(exp));
-
-	if (snprintf(tmp_str, sizeof(tmp_str), "%d", args->uid) < 0) {
-		nm_args->error = true;
-
-		return;
-	}
-
-	add_to_nmount_args(nm_args, "uid", tmp_str, 0);
-
-	if (snprintf(tmp_str, sizeof(tmp_str), "%d", args->gid) < 0) {
-		nm_args->error = true;
-
-		return;
-	}
-
-	add_to_nmount_args(nm_args, "gid", tmp_str, 0);
-
-	if (snprintf(tmp_str, sizeof(tmp_str), "%d", args->mask) < 0) {
-		nm_args->error = true;
-
-		return;
-	}
-
-	add_to_nmount_args(nm_args, "mask", tmp_str, 0);
-
-	if (snprintf(tmp_str, sizeof(tmp_str), "%d", args->dirmask) < 0) {
-		nm_args->error = true;
-
-		return;
-	}
-
-	add_to_nmount_args(nm_args, "dirmask", tmp_str, 0);
-
+	add_to_nmount_args(nm_args, "from",     args->fspec,    0);
+	add_to_nmount_args(nm_args, "export",  &exp,            sizeof(exp));
 	add_to_nmount_args(nm_args, "cs_win",   args->cs_win,   0);
 	add_to_nmount_args(nm_args, "cs_dos",   args->cs_dos,   0);
 	add_to_nmount_args(nm_args, "cs_local", args->cs_local, 0);
+
+	add_fmt_to_nmount_args(nm_args, "uid",     "%d", args->uid);
+	add_fmt_to_nmount_args(nm_args, "gid",     "%d", args->gid);
+	add_fmt_to_nmount_args(nm_args, "mask",    "%d", args->mask);
+	add_fmt_to_nmount_args(nm_args, "dirmask", "%d", args->dirmask);
 
 	add_flag_to_nmount_args(nm_args, "noshortname", !(args->flags & MSDOSFSMNT_SHORTNAME));
 	add_flag_to_nmount_args(nm_args, "nolongname",  !(args->flags & MSDOSFSMNT_LONGNAME));
