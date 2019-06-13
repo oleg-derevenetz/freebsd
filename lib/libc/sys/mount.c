@@ -33,14 +33,17 @@ __FBSDID("$FreeBSD$");
 #include <sys/uio.h>
 #include <sys/mount.h>
 
-#include <isofs/cd9660/cd9660_mount.h>
 #include <fs/msdosfs/msdosfsmount.h>
+#include <fs/nandfs/nandfs_mount.h>
+#include <isofs/cd9660/cd9660_mount.h>
 #include <ufs/ufs/ufsmount.h>
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <inttypes.h>
 #include <string.h>
 
 #include "libc_private.h"
@@ -244,6 +247,22 @@ make_nmount_args_for_msdosfs(struct nmount_args *nm_args, void *data)
 }
 
 static void
+make_nmount_args_for_nandfs(struct nmount_args *nm_args, void *data)
+{
+	struct nandfs_args *args;
+
+	if (data == NULL) {
+		return;
+	}
+
+	args = data;
+
+	add_to_nmount_args(nm_args, "from", args->fspec, 0);
+
+	add_fmt_to_nmount_args(nm_args, "snap", "%"PRIi64, args->cpno);
+}
+
+static void
 make_nmount_args_for_ufs(struct nmount_args *nm_args, void *data)
 {
 	struct ufs_args   *args;
@@ -270,6 +289,7 @@ struct fs_entry
 const struct fs_entry supported_fs[] = {
 	{"cd9660",  make_nmount_args_for_cd9660},
 	{"msdosfs", make_nmount_args_for_msdosfs},
+	{"nandfs",  make_nmount_args_for_nandfs},
 	{"ufs",     make_nmount_args_for_ufs},
 	{NULL,      NULL}
 };
