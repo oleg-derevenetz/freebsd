@@ -34,6 +34,7 @@ __FBSDID("$FreeBSD$");
 #include <sys/mount.h>
 
 #include <isofs/cd9660/cd9660_mount.h>
+#include <fs/msdosfs/msdosfsmount.h>
 #include <ufs/ufs/ufsmount.h>
 
 #include <stdbool.h>
@@ -155,7 +156,7 @@ free_nmount_args(struct nmount_args *nm_args)
 static void
 make_nmount_args_for_cd9660(struct nmount_args *nm_args, void *data)
 {
-	char               ssector_str[64];
+	char               tmp_str[64];
 	struct iso_args   *args;
 	struct export_args exp;
 
@@ -167,35 +168,125 @@ make_nmount_args_for_cd9660(struct nmount_args *nm_args, void *data)
 
 	conv_oexport_to_export(&(args->export), &exp);
 
-	if (snprintf(ssector_str, sizeof(ssector_str), "%d", args->ssector) < 0) {
+	add_to_nmount_args(nm_args, "from",   args->fspec, 0);
+	add_to_nmount_args(nm_args, "export", &exp,        sizeof(exp));
+
+	if (snprintf(tmp_str, sizeof(tmp_str), "%d", args->ssector) < 0) {
 		nm_args->error = true;
 
 		return;
 	}
 
-	add_to_nmount_args(nm_args, "from",     args->fspec,    0);
-	add_to_nmount_args(nm_args, "export",   &exp,           sizeof(exp));
-	add_to_nmount_args(nm_args, "ssector",  ssector_str,    0);
+	add_to_nmount_args(nm_args, "ssector", tmp_str, 0);
+
 	add_to_nmount_args(nm_args, "cs_disk",  args->cs_disk,  0);
 	add_to_nmount_args(nm_args, "cs_local", args->cs_local, 0);
 
 	if (args->flags & ISOFSMNT_NORRIP) {
-		add_to_nmount_args(nm_args, "norrip", NULL, 0);
+		add_to_nmount_args(nm_args, "norrip",         NULL, 0);
+	} else {
+		add_to_nmount_args(nm_args, "rrip",           NULL, 0);
 	}
-	if (!(args->flags & ISOFSMNT_GENS)) {
-		add_to_nmount_args(nm_args, "nogens", NULL, 0);
+	if (args->flags & ISOFSMNT_GENS) {
+		add_to_nmount_args(nm_args, "gens",           NULL, 0);
+	} else {
+		add_to_nmount_args(nm_args, "nogens",         NULL, 0);
 	}
-	if (!(args->flags & ISOFSMNT_EXTATT)) {
-		add_to_nmount_args(nm_args, "noextatt", NULL, 0);
+	if (args->flags & ISOFSMNT_EXTATT) {
+		add_to_nmount_args(nm_args, "extatt",         NULL, 0);
+	} else {
+		add_to_nmount_args(nm_args, "noextatt",       NULL, 0);
 	}
 	if (args->flags & ISOFSMNT_NOJOLIET) {
-		add_to_nmount_args(nm_args, "nojoliet", NULL, 0);
+		add_to_nmount_args(nm_args, "nojoliet",       NULL, 0);
+	} else {
+		add_to_nmount_args(nm_args, "joliet",         NULL, 0);
 	}
-	if (!(args->flags & ISOFSMNT_BROKENJOLIET)) {
+	if (args->flags & ISOFSMNT_BROKENJOLIET) {
+		add_to_nmount_args(nm_args, "brokenjoliet",   NULL, 0);
+	} else {
 		add_to_nmount_args(nm_args, "nobrokenjoliet", NULL, 0);
 	}
-	if (!(args->flags & ISOFSMNT_KICONV)) {
-		add_to_nmount_args(nm_args, "nokiconv", NULL, 0);
+	if (args->flags & ISOFSMNT_KICONV) {
+		add_to_nmount_args(nm_args, "kiconv",         NULL, 0);
+	} else {
+		add_to_nmount_args(nm_args, "nokiconv",       NULL, 0);
+	}
+}
+
+static void
+make_nmount_args_for_msdosfs(struct nmount_args *nm_args, void *data)
+{
+	char                 tmp_str[64];
+	struct msdosfs_args *args;
+	struct export_args   exp;
+
+	if (data == NULL) {
+		return;
+	}
+
+	args = data;
+
+	conv_oexport_to_export(&(args->export), &exp);
+
+	add_to_nmount_args(nm_args, "from",   args->fspec, 0);
+	add_to_nmount_args(nm_args, "export", &exp,        sizeof(exp));
+
+	if (snprintf(tmp_str, sizeof(tmp_str), "%d", args->uid) < 0) {
+		nm_args->error = true;
+
+		return;
+	}
+
+	add_to_nmount_args(nm_args, "uid", tmp_str, 0);
+
+	if (snprintf(tmp_str, sizeof(tmp_str), "%d", args->gid) < 0) {
+		nm_args->error = true;
+
+		return;
+	}
+
+	add_to_nmount_args(nm_args, "gid", tmp_str, 0);
+
+	if (snprintf(tmp_str, sizeof(tmp_str), "%d", args->mask) < 0) {
+		nm_args->error = true;
+
+		return;
+	}
+
+	add_to_nmount_args(nm_args, "mask", tmp_str, 0);
+
+	if (snprintf(tmp_str, sizeof(tmp_str), "%d", args->dirmask) < 0) {
+		nm_args->error = true;
+
+		return;
+	}
+
+	add_to_nmount_args(nm_args, "dirmask", tmp_str, 0);
+
+	add_to_nmount_args(nm_args, "cs_win",   args->cs_win,   0);
+	add_to_nmount_args(nm_args, "cs_dos",   args->cs_dos,   0);
+	add_to_nmount_args(nm_args, "cs_local", args->cs_local, 0);
+
+	if (args->flags & MSDOSFSMNT_SHORTNAME) {
+		add_to_nmount_args(nm_args, "shortname",   NULL, 0);
+	} else {
+		add_to_nmount_args(nm_args, "noshortname", NULL, 0);
+	}
+	if (args->flags & MSDOSFSMNT_LONGNAME) {
+		add_to_nmount_args(nm_args, "longname",    NULL, 0);
+	} else {
+		add_to_nmount_args(nm_args, "nolongname",  NULL, 0);
+	}
+	if (args->flags & MSDOSFSMNT_NOWIN95) {
+		add_to_nmount_args(nm_args, "nowin95",     NULL, 0);
+	} else {
+		add_to_nmount_args(nm_args, "win95",       NULL, 0);
+	}
+	if (args->flags & MSDOSFSMNT_KICONV) {
+		add_to_nmount_args(nm_args, "kiconv",      NULL, 0);
+	} else {
+		add_to_nmount_args(nm_args, "nokiconv",    NULL, 0);
 	}
 }
 
@@ -224,9 +315,10 @@ struct fs_entry
 };
 
 const struct fs_entry supported_fs[] = {
-	{"cd9660", make_nmount_args_for_cd9660},
-	{"ufs",    make_nmount_args_for_ufs},
-	{NULL,     NULL}
+	{"cd9660",  make_nmount_args_for_cd9660},
+	{"msdosfs", make_nmount_args_for_msdosfs},
+	{"ufs",     make_nmount_args_for_ufs},
+	{NULL,      NULL}
 };
 
 #pragma weak mount
