@@ -163,7 +163,7 @@ add_fmt_to_nmount_args(struct nmount_args *nm_args, const char *name, const char
 static void
 add_flag_to_nmount_args(struct nmount_args *nm_args, const char *name, bool flag)
 {
-	if (strlen(name) > 2 && name[0] == 'n' && name[1] == 'o') {
+	if (name[0] == 'n' && name[1] == 'o' && name[2] != '\0') {
 		if (flag) {
 			add_to_nmount_args(nm_args,  name,    NULL, 0);
 		} else {
