@@ -350,8 +350,6 @@ mount(const char *type, const char *dir, int flags, void *data)
 	int                i, result;
 	struct nmount_args nm_args = {};
 
-	fprintf(stderr, "DEBUG: WRAPPER CALLED\n");
-
 	for (i = 0;; i++) {
 		if (supported_fs[i].type == NULL) {
 			break;
@@ -376,8 +374,6 @@ mount(const char *type, const char *dir, int flags, void *data)
 	} else if (supported) {
 		result = _nmount(nm_args.iov, nm_args.iov_count, flags);
 	} else {
-		fprintf(stderr, "DEBUG: UNSUPPORTED FS, CALLING __sys_mount()\n");
-
 		result = __sys_mount(type, dir, flags, data);
 	}
 
