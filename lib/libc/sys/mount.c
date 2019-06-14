@@ -358,8 +358,8 @@ mount(const char *type, const char *dir, int flags, void *data)
 		if (strcmp(type, supported_fs[i].type) == 0) {
 			supported = true;
 
-			add_to_nmount_args(&nm_args, "fstype", (void*)type, 0);
-			add_to_nmount_args(&nm_args, "fspath", (void*)dir,  0);
+			add_to_nmount_args(&nm_args, "fstype", (void *)type, 0);
+			add_to_nmount_args(&nm_args, "fspath", (void *)dir,  0);
 
 			if (supported_fs[i].make_nmount_args_for_type != NULL) {
 				supported_fs[i].make_nmount_args_for_type(&nm_args, data);
