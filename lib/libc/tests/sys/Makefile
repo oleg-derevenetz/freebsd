@@ -7,6 +7,7 @@ PACKAGE=			tests
 .if ${MACHINE_CPUARCH} != "aarch64" && ${MACHINE_CPUARCH} != "riscv"
 ATF_TESTS_C+=			brk_test
 .endif
+ATF_TESTS_C+=			mount_test
 ATF_TESTS_C+=			queue_test
 
 # TODO: clone, lwp_create, lwp_ctl, posix_fadvise, recvmmsg,
