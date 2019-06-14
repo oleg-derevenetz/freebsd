@@ -350,11 +350,7 @@ mount(const char *type, const char *dir, int flags, void *data)
 	int                i, result;
 	struct nmount_args nm_args = {};
 
-	for (i = 0;; i++) {
-		if (supported_fs[i].type == NULL) {
-			break;
-		}
-
+	for (i = 0; supported_fs[i].type != NULL; i++) {
 		if (strcmp(type, supported_fs[i].type) == 0) {
 			supported = true;
 
