@@ -35,6 +35,7 @@ __FBSDID("$FreeBSD$");
 
 #include <fs/msdosfs/msdosfsmount.h>
 #include <fs/nandfs/nandfs_mount.h>
+#include <fs/smbfs/smbfs.h>
 #include <isofs/cd9660/cd9660_mount.h>
 #include <nfsclient/nfsargs.h>
 #include <ufs/ufs/ufsmount.h>
@@ -278,6 +279,33 @@ make_nmount_args_for_nfs(struct nmount_args *nm_args, void *data)
 }
 
 static void
+make_nmount_args_for_smbfs(struct nmount_args *nm_args, void *data)
+{
+	struct smbfs_args *args;
+
+	if (data == NULL) {
+		return;
+	}
+
+	args = data;
+
+	add_to_nmount_args(nm_args, "rootpath", args->root_path, 0);
+
+	add_fmt_to_nmount_args(nm_args, "dev",       "%d", args->dev);
+	add_fmt_to_nmount_args(nm_args, "uid",       "%d", args->uid);
+	add_fmt_to_nmount_args(nm_args, "gid",       "%d", args->gid);
+	add_fmt_to_nmount_args(nm_args, "file_mode", "%d", args->file_mode);
+	add_fmt_to_nmount_args(nm_args, "dir_mode",  "%d", args->dir_mode);
+	add_fmt_to_nmount_args(nm_args, "caseopt",   "%d", args->caseopt);
+
+	add_flag_to_nmount_args(nm_args, "nosoft",     !(args->flags & SMBFS_MOUNT_SOFT));
+	add_flag_to_nmount_args(nm_args, "nointr",     !(args->flags & SMBFS_MOUNT_INTR));
+	add_flag_to_nmount_args(nm_args, "nostrong",   !(args->flags & SMBFS_MOUNT_STRONG));
+	add_flag_to_nmount_args(nm_args, "nohave_nls", !(args->flags & SMBFS_MOUNT_HAVE_NLS));
+	add_flag_to_nmount_args(nm_args, "nolong",       args->flags & SMBFS_MOUNT_NO_LONG);
+}
+
+static void
 make_nmount_args_for_ufs(struct nmount_args *nm_args, void *data)
 {
 	struct ufs_args   *args;
@@ -308,6 +336,7 @@ const struct fs_entry supported_fs[] = {
 	{"nandfs",  make_nmount_args_for_nandfs},
 	{"procfs",  NULL},
 	{"nfs",     make_nmount_args_for_nfs},
+	{"smbfs",   make_nmount_args_for_smbfs},
 	{"ufs",     make_nmount_args_for_ufs},
 	{NULL,      NULL}
 };
