@@ -330,15 +330,16 @@ struct fs_entry
 };
 
 const struct fs_entry supported_fs[] = {
-	{"cd9660",  make_nmount_args_for_cd9660},
-	{"fdescfs", NULL},
-	{"msdosfs", make_nmount_args_for_msdosfs},
-	{"nandfs",  make_nmount_args_for_nandfs},
-	{"procfs",  NULL},
-	{"nfs",     make_nmount_args_for_nfs},
-	{"smbfs",   make_nmount_args_for_smbfs},
-	{"ufs",     make_nmount_args_for_ufs},
-	{NULL,      NULL}
+	{"cd9660",    make_nmount_args_for_cd9660},
+	{"fdescfs",   NULL},
+	{"linprocfs", NULL},
+	{"msdosfs",   make_nmount_args_for_msdosfs},
+	{"nandfs",    make_nmount_args_for_nandfs},
+	{"procfs",    NULL},
+	{"nfs",       make_nmount_args_for_nfs},
+	{"smbfs",     make_nmount_args_for_smbfs},
+	{"ufs",       make_nmount_args_for_ufs},
+	{NULL,        NULL}
 };
 
 #pragma weak mount
