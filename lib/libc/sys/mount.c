@@ -144,6 +144,12 @@ add_to_nmount_args(struct nmount_args *nm_args, const char *name, void *value, s
 }
 
 static void
+add_str_to_nmount_args(struct nmount_args *nm_args, const char *name, const char *value)
+{
+	add_to_nmount_args(nm_args, name, (void *)value, 0);
+}
+
+static void
 add_fmt_to_nmount_args(struct nmount_args *nm_args, const char *name, const char *format, ...)
 {
 	char    tmp_str[64];
@@ -202,10 +208,11 @@ make_nmount_args_for_cd9660(struct nmount_args *nm_args, void *data)
 
 	conv_oexport_to_export(&(args->export), &exp);
 
-	add_to_nmount_args(nm_args, "from",     args->fspec,    0);
-	add_to_nmount_args(nm_args, "export",  &exp,            sizeof(exp));
-	add_to_nmount_args(nm_args, "cs_disk",  args->cs_disk,  0);
-	add_to_nmount_args(nm_args, "cs_local", args->cs_local, 0);
+	add_to_nmount_args(nm_args, "export", &exp, sizeof(exp));
+
+	add_str_to_nmount_args(nm_args, "from",     args->fspec);
+	add_str_to_nmount_args(nm_args, "cs_disk",  args->cs_disk);
+	add_str_to_nmount_args(nm_args, "cs_local", args->cs_local);
 
 	add_fmt_to_nmount_args(nm_args, "ssector", "%d", args->ssector);
 
@@ -231,21 +238,22 @@ make_nmount_args_for_msdosfs(struct nmount_args *nm_args, void *data)
 
 	conv_oexport_to_export(&(args->export), &exp);
 
-	add_to_nmount_args(nm_args, "from",     args->fspec,    0);
-	add_to_nmount_args(nm_args, "export",  &exp,            sizeof(exp));
-	add_to_nmount_args(nm_args, "cs_win",   args->cs_win,   0);
-	add_to_nmount_args(nm_args, "cs_dos",   args->cs_dos,   0);
-	add_to_nmount_args(nm_args, "cs_local", args->cs_local, 0);
+	add_to_nmount_args(nm_args, "export", &exp, sizeof(exp));
+
+	add_str_to_nmount_args(nm_args, "from",     args->fspec);
+	add_str_to_nmount_args(nm_args, "cs_win",   args->cs_win);
+	add_str_to_nmount_args(nm_args, "cs_dos",   args->cs_dos);
+	add_str_to_nmount_args(nm_args, "cs_local", args->cs_local);
 
 	add_fmt_to_nmount_args(nm_args, "uid",     "%d", args->uid);
 	add_fmt_to_nmount_args(nm_args, "gid",     "%d", args->gid);
 	add_fmt_to_nmount_args(nm_args, "mask",    "%d", args->mask);
 	add_fmt_to_nmount_args(nm_args, "dirmask", "%d", args->dirmask);
 
-	add_flag_to_nmount_args(nm_args, "noshortname", !(args->flags & MSDOSFSMNT_SHORTNAME));
-	add_flag_to_nmount_args(nm_args, "nolongname",  !(args->flags & MSDOSFSMNT_LONGNAME));
-	add_flag_to_nmount_args(nm_args, "nowin95",       args->flags & MSDOSFSMNT_NOWIN95);
-	add_flag_to_nmount_args(nm_args, "nokiconv",    !(args->flags & MSDOSFSMNT_KICONV));
+	add_flag_to_nmount_args(nm_args, "noshortnames", !(args->flags & MSDOSFSMNT_SHORTNAME));
+	add_flag_to_nmount_args(nm_args, "nolongnames",  !(args->flags & MSDOSFSMNT_LONGNAME));
+	add_flag_to_nmount_args(nm_args, "nowin95",        args->flags & MSDOSFSMNT_NOWIN95);
+	add_flag_to_nmount_args(nm_args, "nokiconv",     !(args->flags & MSDOSFSMNT_KICONV));
 }
 
 static void
@@ -259,7 +267,7 @@ make_nmount_args_for_nandfs(struct nmount_args *nm_args, void *data)
 
 	args = data;
 
-	add_to_nmount_args(nm_args, "from", args->fspec, 0);
+	add_str_to_nmount_args(nm_args, "from", args->fspec);
 
 	add_fmt_to_nmount_args(nm_args, "snap", "%"PRId64, args->cpno);
 }
@@ -289,7 +297,7 @@ make_nmount_args_for_smbfs(struct nmount_args *nm_args, void *data)
 
 	args = data;
 
-	add_to_nmount_args(nm_args, "rootpath", args->root_path, 0);
+	add_str_to_nmount_args(nm_args, "rootpath", args->root_path);
 
 	add_fmt_to_nmount_args(nm_args, "dev",       "%d", args->dev);
 	add_fmt_to_nmount_args(nm_args, "uid",       "%d", args->uid);
@@ -319,8 +327,9 @@ make_nmount_args_for_ufs(struct nmount_args *nm_args, void *data)
 
 	conv_oexport_to_export(&(args->export), &exp);
 
-	add_to_nmount_args(nm_args, "from",   args->fspec, 0);
-	add_to_nmount_args(nm_args, "export", &exp,        sizeof(exp));
+	add_to_nmount_args(nm_args, "export", &exp, sizeof(exp));
+
+	add_str_to_nmount_args(nm_args, "from", args->fspec);
 }
 
 struct fs_entry
@@ -354,8 +363,8 @@ mount(const char *type, const char *dir, int flags, void *data)
 		if (strcmp(type, supported_fs[i].type) == 0) {
 			supported = true;
 
-			add_to_nmount_args(&nm_args, "fstype", (void *)type, 0);
-			add_to_nmount_args(&nm_args, "fspath", (void *)dir,  0);
+			add_str_to_nmount_args(&nm_args, "fstype", type);
+			add_str_to_nmount_args(&nm_args, "fspath", dir);
 
 			if (supported_fs[i].make_nmount_args_for_type != NULL) {
 				supported_fs[i].make_nmount_args_for_type(&nm_args, data);
