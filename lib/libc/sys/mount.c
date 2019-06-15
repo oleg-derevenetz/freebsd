@@ -68,6 +68,26 @@ conv_oexport_to_export(struct oexport_args *oexp, struct export_args *exp)
 }
 
 static void
+init_nmount_args(struct nmount_args *nm_args)
+{
+	size_t size;
+
+	memset(nm_args, 0, sizeof(*nm_args));
+
+	size = sizeof(*(nm_args->iov)) * 4;
+
+	nm_args->iov = malloc(size);
+
+	if (nm_args->iov == NULL) {
+		nm_args->error = true;
+
+		return;
+	}
+
+	nm_args->iov_size = size;
+}
+
+static void
 add_to_nmount_args(struct nmount_args *nm_args, const char *name, void *value, size_t value_size)
 {
 	size_t size;
@@ -357,7 +377,9 @@ mount(const char *type, const char *dir, int flags, void *data)
 {
 	bool               supported = false;
 	int                i, result;
-	struct nmount_args nm_args = {};
+	struct nmount_args nm_args;
+
+	init_nmount_args(&nm_args);
 
 	for (i = 0; supported_fs[i].type != NULL; i++) {
 		if (strcmp(type, supported_fs[i].type) == 0) {
