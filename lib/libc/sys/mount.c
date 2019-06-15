@@ -88,7 +88,7 @@ init_nmount_args(struct nmount_args *nm_args)
 }
 
 static void
-add_to_nmount_args(struct nmount_args *nm_args, const char *name, void *value, size_t value_size)
+add_to_nmount_args(struct nmount_args *nm_args, const char *name, const void *value, size_t value_size)
 {
 	size_t size;
 	void  *tmp_ptr;
@@ -166,7 +166,7 @@ add_to_nmount_args(struct nmount_args *nm_args, const char *name, void *value, s
 static void
 add_str_to_nmount_args(struct nmount_args *nm_args, const char *name, const char *value)
 {
-	add_to_nmount_args(nm_args, name, (void *)value, 0);
+	add_to_nmount_args(nm_args, name, value, 0);
 }
 
 static void
