@@ -162,5 +162,5 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, mount_procfs);
 	ATF_TP_ADD_TC(tp, mount_unknownfs);
 
-	return atf_no_error();
+	return (atf_no_error());
 }

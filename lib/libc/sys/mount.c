@@ -405,5 +405,5 @@ mount(const char *type, const char *dir, int flags, void *data)
 
 	free_nmount_args(&nm_args);
 
-	return result;
+	return (result);
 }
