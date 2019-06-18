@@ -168,6 +168,13 @@ add_str_to_nmount_args(struct nmount_args *nm_args, const char *name, const char
 	add_to_nmount_args(nm_args, name, value, 0);
 }
 
+/*
+ * Add name-value pair to nmount_args, where value is a printf(3)-style formatted string.
+ *
+ * Syntax example:
+ *
+ * add_fmt_to_nmount_args(nm_args, "ssector", "%d", ssector);
+ */
 static void
 add_fmt_to_nmount_args(struct nmount_args *nm_args, const char *name, const char *format, ...)
 {
