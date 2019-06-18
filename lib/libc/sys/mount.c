@@ -162,6 +162,13 @@ add_to_nmount_args(struct nmount_args *nm_args, const char *name, const void *va
 	nm_args->iov_count++;
 }
 
+/*
+ * Add name-value pair to nmount_args, where value is a null-terminated string.
+ *
+ * Syntax example:
+ *
+ * add_str_to_nmount_args(nm_args, "from", fspec);
+ */
 static void
 add_str_to_nmount_args(struct nmount_args *nm_args, const char *name, const char *value)
 {
@@ -169,7 +176,8 @@ add_str_to_nmount_args(struct nmount_args *nm_args, const char *name, const char
 }
 
 /*
- * Add name-value pair to nmount_args, where value is a printf(3)-style formatted string.
+ * Add name-value pair to nmount_args, where value is a printf(3)-style
+ * formatted string.
  *
  * Syntax example:
  *
@@ -192,6 +200,19 @@ add_fmt_to_nmount_args(struct nmount_args *nm_args, const char *name, const char
 	va_end(ap);
 }
 
+/*
+ * Add name-value pair to nmount_args, where name is a fs driver flag name and
+ * value is always NULL.
+ *
+ * Value of the "name" argument should always start with "no" (for example,
+ * "noflag"), function will add it as is or remove the "no" part depending
+ * on the value of the "flag" argument.
+ *
+ * Syntax examples:
+ *
+ * add_flag_to_nmount_args(nm_args, "norrip",   flags & ISOFSMNT_NORRIP);
+ * add_flag_to_nmount_args(nm_args, "nogens", !(flags & ISOFSMNT_GENS));
+ */
 static void
 add_flag_to_nmount_args(struct nmount_args *nm_args, const char *name, bool flag)
 {
