@@ -39,12 +39,13 @@ __FBSDID("$FreeBSD$");
 #include <nfsclient/nfsargs.h>
 #include <ufs/ufs/ufsmount.h>
 
+#include <errno.h>
+#include <inttypes.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdarg.h>
-#include <stdlib.h>
 #include <stdio.h>
-#include <inttypes.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "libc_private.h"
@@ -220,12 +221,19 @@ add_fmt_to_nmount_args(struct nmount_args *nm_args, const char *name, const char
 static void
 add_flag_to_nmount_args(struct nmount_args *nm_args, const char *name, bool flag)
 {
+	if (nm_args->error) {
+		return;
+	}
+
 	if (name[0] == 'n' && name[1] == 'o' && name[2] != '\0') {
 		if (flag) {
 			add_to_nmount_args(nm_args,  name,    NULL, 0);
 		} else {
 			add_to_nmount_args(nm_args, &name[2], NULL, 0);
 		}
+	} else {
+		errno          = EDOOFUS;
+		nm_args->error = true;
 	}
 }
 
