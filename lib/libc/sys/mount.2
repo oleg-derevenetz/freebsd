@@ -75,6 +75,12 @@ of a successful mount are swept under the carpet so to speak, and
 are unavailable until the file system is unmounted.
 .Pp
 The
+.Fn mount
+implementation is a wrapper around the
+.Fn nmount
+system call for most file system types.
+.Pp
+The
 .Fn nmount
 system call behaves similarly to
 .Fn mount ,
