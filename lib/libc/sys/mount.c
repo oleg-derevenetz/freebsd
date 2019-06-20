@@ -189,6 +189,10 @@ add_fmt_to_nmount_args(struct nmount_args *nm_args, const char *name, const char
 	char    tmp_str[64];
 	va_list ap;
 
+	if (nm_args->error) {
+		return;
+	}
+
 	va_start(ap, format);
 
 	if (vsnprintf(tmp_str, sizeof(tmp_str), format, ap) < 0) {
