@@ -37,7 +37,7 @@ __FBSDID("$FreeBSD$");
 
 #include <atf-c.h>
 
-const char * const dir = "mount";
+static const char * const dir = "mount";
 
 ATF_TC_WITH_CLEANUP(mount_fdescfs);
 

@@ -348,6 +348,7 @@ void	       *__sys_mmap(void *, __size_t, int, int, int, __off_t);
 int		__sys_mount(const char *, const char *, int, void *);
 int		__sys_msync(void *, __size_t, int);
 int		__sys_nanosleep(const struct timespec *, struct timespec *);
+int		__sys_nmount(struct iovec *, unsigned int, int);
 int		__sys_open(const char *, int, ...);
 int		__sys_openat(int, const char *, int, ...);
 int		__sys_pselect(int, struct fd_set *, struct fd_set *,
