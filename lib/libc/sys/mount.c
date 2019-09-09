@@ -84,7 +84,8 @@ init_nmount_args(struct nmount_args *nm_args)
 }
 
 static void
-add_to_nmount_args(struct nmount_args *nm_args, const char *name, const void *value, size_t value_size)
+add_to_nmount_args(struct nmount_args *nm_args, const char *name,
+	const void *value, size_t value_size)
 {
 	size_t size;
 	void *tmp_ptr;
@@ -143,7 +144,8 @@ add_to_nmount_args(struct nmount_args *nm_args, const char *name, const void *va
 			}
 
 			nm_args->iov[nm_args->iov_count].iov_base = tmp_ptr;
-			nm_args->iov[nm_args->iov_count].iov_len = strlen(tmp_ptr) + 1;
+			nm_args->iov[nm_args->iov_count].iov_len =
+				strlen(tmp_ptr) + 1;
 		}
 	} else {
 		nm_args->iov[nm_args->iov_count].iov_base = NULL;
@@ -161,7 +163,8 @@ add_to_nmount_args(struct nmount_args *nm_args, const char *name, const void *va
  * add_str_to_nmount_args(nm_args, "from", fspec);
  */
 static void
-add_str_to_nmount_args(struct nmount_args *nm_args, const char *name, const char *value)
+add_str_to_nmount_args(struct nmount_args *nm_args, const char *name,
+	const char *value)
 {
 	add_to_nmount_args(nm_args, name, value, 0);
 }
@@ -175,7 +178,8 @@ add_str_to_nmount_args(struct nmount_args *nm_args, const char *name, const char
  * add_fmt_to_nmount_args(nm_args, "ssector", "%d", ssector);
  */
 static void
-add_fmt_to_nmount_args(struct nmount_args *nm_args, const char *name, const char *format, ...)
+add_fmt_to_nmount_args(struct nmount_args *nm_args, const char *name,
+	const char *format, ...)
 {
 	char tmp_str[64];
 	va_list ap;
@@ -207,7 +211,8 @@ add_fmt_to_nmount_args(struct nmount_args *nm_args, const char *name, const char
  * add_flag_to_nmount_args(nm_args, "nogens", !(flags & ISOFSMNT_GENS));
  */
 static void
-add_flag_to_nmount_args(struct nmount_args *nm_args, const char *name, bool flag)
+add_flag_to_nmount_args(struct nmount_args *nm_args, const char *name,
+	bool flag)
 {
 	if (nm_args->error)
 		return;
@@ -258,12 +263,18 @@ make_nmount_args_for_cd9660(struct nmount_args *nm_args, void *data)
 
 	add_fmt_to_nmount_args(nm_args, "ssector", "%d", args->ssector);
 
-	add_flag_to_nmount_args(nm_args, "norrip", args->flags & ISOFSMNT_NORRIP);
-	add_flag_to_nmount_args(nm_args, "nogens", !(args->flags & ISOFSMNT_GENS));
-	add_flag_to_nmount_args(nm_args, "noextatt", !(args->flags & ISOFSMNT_EXTATT));
-	add_flag_to_nmount_args(nm_args, "nojoliet", args->flags & ISOFSMNT_NOJOLIET);
-	add_flag_to_nmount_args(nm_args, "nobrokenjoliet", !(args->flags & ISOFSMNT_BROKENJOLIET));
-	add_flag_to_nmount_args(nm_args, "nokiconv", !(args->flags & ISOFSMNT_KICONV));
+	add_flag_to_nmount_args(nm_args, "norrip",
+		args->flags & ISOFSMNT_NORRIP);
+	add_flag_to_nmount_args(nm_args, "nogens",
+		!(args->flags & ISOFSMNT_GENS));
+	add_flag_to_nmount_args(nm_args, "noextatt",
+		!(args->flags & ISOFSMNT_EXTATT));
+	add_flag_to_nmount_args(nm_args, "nojoliet",
+		args->flags & ISOFSMNT_NOJOLIET);
+	add_flag_to_nmount_args(nm_args, "nobrokenjoliet",
+		!(args->flags & ISOFSMNT_BROKENJOLIET));
+	add_flag_to_nmount_args(nm_args, "nokiconv",
+		!(args->flags & ISOFSMNT_KICONV));
 }
 
 static void
@@ -290,10 +301,14 @@ make_nmount_args_for_msdosfs(struct nmount_args *nm_args, void *data)
 	add_fmt_to_nmount_args(nm_args, "mask", "%d", args->mask);
 	add_fmt_to_nmount_args(nm_args, "dirmask", "%d", args->dirmask);
 
-	add_flag_to_nmount_args(nm_args, "noshortnames", !(args->flags & MSDOSFSMNT_SHORTNAME));
-	add_flag_to_nmount_args(nm_args, "nolongnames", !(args->flags & MSDOSFSMNT_LONGNAME));
-	add_flag_to_nmount_args(nm_args, "nowin95", args->flags & MSDOSFSMNT_NOWIN95);
-	add_flag_to_nmount_args(nm_args, "nokiconv", !(args->flags & MSDOSFSMNT_KICONV));
+	add_flag_to_nmount_args(nm_args, "noshortnames",
+		!(args->flags & MSDOSFSMNT_SHORTNAME));
+	add_flag_to_nmount_args(nm_args, "nolongnames",
+		!(args->flags & MSDOSFSMNT_LONGNAME));
+	add_flag_to_nmount_args(nm_args, "nowin95",
+		args->flags & MSDOSFSMNT_NOWIN95);
+	add_flag_to_nmount_args(nm_args, "nokiconv",
+		!(args->flags & MSDOSFSMNT_KICONV));
 }
 
 static void
@@ -342,11 +357,16 @@ make_nmount_args_for_smbfs(struct nmount_args *nm_args, void *data)
 	add_fmt_to_nmount_args(nm_args, "dir_mode", "%d", args->dir_mode);
 	add_fmt_to_nmount_args(nm_args, "caseopt", "%d", args->caseopt);
 
-	add_flag_to_nmount_args(nm_args, "nosoft", !(args->flags & SMBFS_MOUNT_SOFT));
-	add_flag_to_nmount_args(nm_args, "nointr", !(args->flags & SMBFS_MOUNT_INTR));
-	add_flag_to_nmount_args(nm_args, "nostrong", !(args->flags & SMBFS_MOUNT_STRONG));
-	add_flag_to_nmount_args(nm_args, "nohave_nls", !(args->flags & SMBFS_MOUNT_HAVE_NLS));
-	add_flag_to_nmount_args(nm_args, "nolong", args->flags & SMBFS_MOUNT_NO_LONG);
+	add_flag_to_nmount_args(nm_args, "nosoft",
+		!(args->flags & SMBFS_MOUNT_SOFT));
+	add_flag_to_nmount_args(nm_args, "nointr",
+		!(args->flags & SMBFS_MOUNT_INTR));
+	add_flag_to_nmount_args(nm_args, "nostrong",
+		!(args->flags & SMBFS_MOUNT_STRONG));
+	add_flag_to_nmount_args(nm_args, "nohave_nls",
+		!(args->flags & SMBFS_MOUNT_HAVE_NLS));
+	add_flag_to_nmount_args(nm_args, "nolong",
+		args->flags & SMBFS_MOUNT_NO_LONG);
 }
 
 static void
@@ -400,7 +420,8 @@ mount(const char *type, const char *dir, int flags, void *data)
 			add_str_to_nmount_args(&nm_args, "fspath", dir);
 
 			if (supported_fs[i].make_nmount_args_for_type != NULL)
-				supported_fs[i].make_nmount_args_for_type(&nm_args, data);
+				supported_fs[i].make_nmount_args_for_type(
+					&nm_args, data);
 
 			break;
 		}
